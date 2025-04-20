@@ -1,52 +1,65 @@
 #include <Arduino.h>
-#define IN1 3  // D1
-#define IN2 4  // D2
-#define IN3 5  // D3
-#define IN4 6  // D4
-#define ENA 2  // D0
-#define ENB 7  // D5
+#include <Wire.h>
+#include <Adafruit_MotorShield.h>
+
+// Create motor shield object
+Adafruit_MotorShield AFMS = Adafruit_MotorShield();
+
+// Get motors: 1 = left, 2 = right (you can flip them if needed)
+Adafruit_DCMotor *motorLeft = AFMS.getMotor(1);
+Adafruit_DCMotor *motorRight = AFMS.getMotor(2);
 
 String inputBuffer = "";
 
 void setup() {
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
-  pinMode(IN3, OUTPUT);
-  pinMode(IN4, OUTPUT);
-  pinMode(ENA, OUTPUT);
-  pinMode(ENB, OUTPUT);
-
   Serial.begin(115200);
+  delay(2000);  // <-- Give FeatherWing time to power up
+  bool motorFound = false;
+  for (int i = 0; i < 5; i++) {
+    if (AFMS.begin()) {
+      motorFound = true;
+      break;
+    }
+    Serial.println("Motor shield not found. Retrying...");
+    delay(1000);
+  }
+  if (!motorFound) {
+    Serial.println("Restarting ESP...");
+    ESP.restart();
+  }
+
+  Serial.println("Motor Shield is found. Starting...");
+
+  Serial.println("Motor Shield initialized.");
+  motorLeft->setSpeed(0);
+  motorRight->setSpeed(0);
+  motorLeft->run(RELEASE);
+  motorRight->run(RELEASE);
 }
 
 void driveMotors(int leftSpeed, int rightSpeed) {
-  // Direction: Motor A
+  leftSpeed = constrain(leftSpeed, -255, 255);
+  rightSpeed = constrain(rightSpeed, -255, 255);
+
+  // LEFT motor
   if (leftSpeed > 0) {
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
+    motorLeft->run(FORWARD);
   } else if (leftSpeed < 0) {
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, HIGH);
+    motorLeft->run(BACKWARD);
   } else {
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, LOW);
+    motorLeft->run(RELEASE);
   }
+  motorLeft->setSpeed(abs(leftSpeed));
 
-  // Direction: Motor B
+  // RIGHT motor
   if (rightSpeed > 0) {
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
+    motorRight->run(FORWARD);
   } else if (rightSpeed < 0) {
-    digitalWrite(IN3, LOW);
-    digitalWrite(IN4, HIGH);
+    motorRight->run(BACKWARD);
   } else {
-    digitalWrite(IN3, LOW);
-    digitalWrite(IN4, LOW);
+    motorRight->run(RELEASE);
   }
-
-  // PWM
-  analogWrite(ENA, abs(leftSpeed));
-  analogWrite(ENB, abs(rightSpeed));
+  motorRight->setSpeed(abs(rightSpeed));
 }
 
 void loop() {
@@ -59,6 +72,7 @@ void loop() {
           int x = inputBuffer.substring(0, spaceIndex).toInt();     // turn
           int y = inputBuffer.substring(spaceIndex + 1).toInt();    // forward/back
 
+          // Differential drive math
           int left = constrain(y + x, -255, 255);
           int right = constrain(y - x, -255, 255);
 
@@ -71,4 +85,3 @@ void loop() {
     }
   }
 }
-
