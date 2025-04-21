@@ -1,3 +1,26 @@
+<p align="center">
+  <img src="Diagram.png" alt="ESP32 Robot Controller Diagram" width="600"/>
+</p>
+
+<h1 align="center">ESP32 Robot Controller with Joystick 🎮</h1>
+<p align="center">Host Joystick ➔ Serial ➔ ESP32 ➔ FeatherWing ➔ Motors</p>
+
+<p align="center">
+  <a href="https://platformio.org/">
+    <img src="https://img.shields.io/badge/Built%20With-PlatformIO-orange.svg" alt="PlatformIO Badge">
+  </a>
+  <a href="https://docs.ros.org/en/humble/">
+    <img src="https://img.shields.io/badge/Ready%20For-ROS2-blueviolet.svg" alt="ROS2 Badge">
+  </a>
+  <a href="https://www.python.org/">
+    <img src="https://img.shields.io/badge/Python-3.8+-blue.svg" alt="Python Badge">
+  </a>
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License">
+  </a>
+</p>
+
+
 # 🕹️ ESP32 Robot Controller with Joystick over Serial
 
 This project connects a USB joystick (e.g., EasySMX) to an ESP32-based robot controller using serial communication. The ESP32 receives speed and direction commands and drives motors via an Adafruit FeatherWing motor shield (PCA9685 + TB6612FNG). The system is designed to run a joystick interface on a host like Jetson Xavier and control motors with smooth differential drive.
@@ -22,6 +45,30 @@ Mobile Robot/
 ├── Diagram.pptx                    # Editable PowerPoint version of diagram
 └── README.md                       # You are here :)
 ```
+
+---
+
+## 🤖 ROS 2 Integration Plans
+
+This project is designed with future ROS 2 integration in mind, allowing the ESP32 to act as a low-level motor controller while high-level planning and sensing are handled on the Jetson Xavier using ROS 2 nodes.
+
+### ✅ Current Architecture
+- Joystick axis data is sent directly to the ESP32 via serial over USB.
+- The ESP32 applies differential drive logic and controls the motors accordingly.
+- Communication uses a simple `"X Y\n"` format for motor speeds from -255 to 255.
+
+### 🚀 Future ROS 2 Upgrade Path
+
+| Component            | Role                                |
+|----------------------|-------------------------------------|
+| `joy_node`           | Reads USB joystick via SDL or evdev |
+| `teleop_twist_joy`   | Converts joystick axes to `cmd_vel` |
+| `serial_bridge_node` | Sends `cmd_vel` as `"X Y"` strings over serial |
+| `esp32_motor_driver` | Runs on ESP32 to parse and execute commands |
+
+Additional plans include:
+- Publishing encoder feedback from ESP32 for `odom`
+- Creating a Isaac Sim digital twin for development and validation
 
 ---
 
@@ -137,7 +184,7 @@ Key connections:
 
 ## 📸 Demo
 
-> *(A short GIF of the robot in action to be uploaded)*
+> *(A short GIF or photo of the robot in action to be uploaded)*
 
 ---
 
