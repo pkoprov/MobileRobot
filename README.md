@@ -141,6 +141,7 @@ Use `joystick_to_serial.py` to:
 sudo apt install joystick
 export SDL_JOYSTICK_DEVICE=/dev/input/js0
 ```
+> You may also want to add it to `.bashrc` to automatically set SDL joystick device for Pygame.
 
 ---
 
