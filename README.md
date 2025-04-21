@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Diagram.png" alt="ESP32 Robot Controller Diagram" width="600"/>
+  <img src="assets/Diagram.png" alt="ESP32 Robot Controller Diagram" width="600"/>
 </p>
 
 <h1 align="center">ESP32 Robot Controller with Joystick 🎮</h1>
