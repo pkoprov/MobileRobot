@@ -185,7 +185,9 @@ Key connections:
 
 ## 📸 Demo
 
-> *(A short GIF or photo of the robot in action to be uploaded)*
+<p align="center">
+  <img src="assets/Animation.gif" alt="ESP32 Robot Controller Diagram" width="600"/>
+</p>
 
 ---
 
