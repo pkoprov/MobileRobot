@@ -9,19 +9,18 @@ def find_esp32_port():
     system = platform.system()
     ports = serial.tools.list_ports.comports()
 
-    # First, check for USB-connected ESP32
+    print("Available ports:")
+    for p in ports:
+        print(f"{p.device} — {p.description} — VID:{p.vid} PID:{p.pid}")
+
     for port in ports:
-        port_name = port.device
-        description = port.description.lower()
-
         if system == "Windows":
-            if "usb serial" in description or "esp32" in description:
-                return port_name
+            if "usb serial" in port.description.lower() or "esp32" in port.description.lower():
+                return port.device
         elif system == "Linux":
-            if port.vid == 0x303A:  # Espressif vendor ID
-                return port_name
+            if port.vid == 0x303A:
+                return port.device
 
-    # If no USB ESP32 found, check for Jetson UART (ttyTHS1)
     if system == "Linux":
         if os.path.exists("/dev/ttyTHS0"):
             return "/dev/ttyTHS0"
