@@ -3,11 +3,13 @@ import pygame
 import serial
 import serial.tools.list_ports
 import time
+import os
 
 def find_esp32_port():
     system = platform.system()
     ports = serial.tools.list_ports.comports()
 
+    # First, check for USB-connected ESP32
     for port in ports:
         port_name = port.device
         description = port.description.lower()
@@ -16,9 +18,13 @@ def find_esp32_port():
             if "usb serial" in description or "esp32" in description:
                 return port_name
         elif system == "Linux":
-            # Jetson/Xavier typically uses /dev/ttyUSBx or /dev/ttyACMx
-            if port.vid == 0x303A:
+            if port.vid == 0x303A:  # Espressif vendor ID
                 return port_name
+
+    # If no USB ESP32 found, check for Jetson UART (ttyTHS1)
+    if system == "Linux":
+        if os.path.exists("/dev/ttyTHS1"):
+            return "/dev/ttyTHS1"
 
     return None
 
