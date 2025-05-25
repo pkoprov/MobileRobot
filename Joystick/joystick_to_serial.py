@@ -23,8 +23,8 @@ def find_esp32_port():
 
     # If no USB ESP32 found, check for Jetson UART (ttyTHS1)
     if system == "Linux":
-        if os.path.exists("/dev/ttyTHS1"):
-            return "/dev/ttyTHS1"
+        if os.path.exists("/dev/ttyTHS0"):
+            return "/dev/ttyTHS0"
 
     return None
 

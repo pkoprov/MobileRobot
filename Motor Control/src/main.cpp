@@ -12,25 +12,26 @@ Adafruit_DCMotor *motorRight = AFMS.getMotor(2);
 String inputBuffer = "";
 
 void setup() {
-  Serial.begin(115200);
+  Serial1.begin(115200, SERIAL_8N1, D7, D6); // RX, TX pins for ESP32
   delay(2000);  // <-- Give FeatherWing time to power up
+  Serial1.println("ESP32 is up.");
   bool motorFound = false;
   for (int i = 0; i < 5; i++) {
     if (AFMS.begin()) {
       motorFound = true;
       break;
     }
-    Serial.println("Motor shield not found. Retrying...");
+    Serial1.println("Motor shield not found. Retrying...");
     delay(1000);
   }
   if (!motorFound) {
-    Serial.println("Restarting ESP...");
+    Serial1.println("Restarting ESP...");
     ESP.restart();
   }
 
-  Serial.println("Motor Shield is found. Starting...");
+  Serial1.println("Motor Shield is found. Starting...");
 
-  Serial.println("Motor Shield initialized.");
+  Serial1.println("Motor Shield initialized.");
   motorLeft->setSpeed(0);
   motorRight->setSpeed(0);
   motorLeft->run(RELEASE);
@@ -63,8 +64,8 @@ void driveMotors(int leftSpeed, int rightSpeed) {
 }
 
 void loop() {
-  while (Serial.available()) {
-    char ch = Serial.read();
+  while (Serial1.available()) {
+    char ch = Serial1.read();
     if (ch == '\n' || ch == '\r') {
       if (inputBuffer.length() > 0) {
         int spaceIndex = inputBuffer.indexOf(' ');
