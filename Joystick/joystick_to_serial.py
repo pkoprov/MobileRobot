@@ -57,8 +57,8 @@ while True:
     x = joystick.get_axis(0)  # Left stick horizontal
     y = joystick.get_axis(1)  # Left stick vertical
 
-    Xspeed = int(min(x, 1.0) * 255)
-    Yspeed = int(min(y, 1.0) * 255)
+    Xspeed = int(min(x, 1.0))
+    Yspeed = int(min(y, 1.0))
 
     cmd = f"{Xspeed} {Yspeed}"
 
