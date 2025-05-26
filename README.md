@@ -167,6 +167,7 @@ Key connections:
 - ESP32 GND ↔ FeatherWing GND
 - FeatherWing VMOT → 6–12V motor supply
 - Add 4.7k–10kΩ pull-up resistors to SDA/SCL if needed for I²C stability
+- ESP32 TX/RX (D6/D7) → Jetson GPIO RX/TX (8/10)
 
 ---
 
