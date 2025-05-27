@@ -81,6 +81,8 @@ void processSerialCommand() {
         float left = constrain(y + x, -1.0, 1.0);
         float right = constrain(y - x, -1.0, 1.0);
 
+        Serial.println("received: " + inputBuffer);
+
         driveMotors(left, right);
       } else {
         Serial1.println("Invalid input: " + inputBuffer);
