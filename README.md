@@ -58,7 +58,7 @@ This project is designed with future ROS 2 integration in mind, allowing the ESP
 - Joystick axis data is sent directly to the ESP32 via serial over USB.
 - The ESP32 applies differential drive logic and controls the motors.
 - It also performs battery voltage monitoring using ADC, smoothing with a moving average, and alerts via serial when battery is low.
-- Communication uses a simple `"X Y\n"` format for motor speeds from -255 to 255.
+- Communication uses a simple `"X Y\n"` ... from -1.0 to 1.0 (normalized float).
 
 ### 🚀 Future ROS 2 Upgrade Path
 
@@ -99,10 +99,7 @@ Additional plans include:
 
 ```ini
 lib_deps =
-  adafruit/Adafruit BusIO
-  adafruit/Adafruit PWM Servo Driver Library
   adafruit/Adafruit Motor Shield V2 Library
-  SPI
 ```
 
 
@@ -125,18 +122,18 @@ pip install pygame pyserial
 ### 1. Run on ESP32
 
 Build and upload `main.cpp` using PlatformIO. It will:
-- Initialize the FeatherWing
-- Wait for serial input of joystick axis data (formatted as `"X Y\n"`)
+- Initialize the FeatherWing motor driver
+- Monitor battery voltage with ADC and filter readings using a moving average
+- Print low-voltage warnings (< 11.0 V) to the serial console
+- Wait for serial input of joystick axis data (formatted as `"X Y\n"`, with normalized values from `-1.0` to `1.0`)
 - Apply differential drive logic to control two DC motors
-
 
 ### 2. Run on Jetson or PC
 
 Use `joystick_to_serial.py` to:
 - Auto-detect ESP32 serial port
 - Read left joystick axis input
-- Convert axis to X/Y values in `-255 to 255` range
-- Send commands like `"120 -100\n"` over serial
+- Send commands like `"0.8 -0.5\n"` over serial
 
 
 > Note: On Jetson or Linux, you may need to install `joystick` and set:
@@ -156,7 +153,7 @@ right_speed = y - x
 
 - `x` controls turning
 - `y` controls forward/backward
-- Values are clamped to `-255 to 255`
+- Values are constrained to `[-1.0, 1.0]` and mapped to PWM duty (0–255).
 
 ---
 
@@ -177,6 +174,12 @@ Key connections:
 - FeatherWing VMOT → 6–12V motor supply
 - Add 4.7k–10kΩ pull-up resistors to SDA/SCL if needed for I²C stability
 - ESP32 TX/RX (D6/D7) → Jetson GPIO RX/TX (8/10)
+- **Battery Voltage Sense**: A voltage divider (e.g., 43kΩ + 10kΩ) connected between motor supply (+12V) and an analog pin (e.g., A0/GPIO2) to monitor battery voltage
+- **GND Jumper**: Ensure the battery/motor GND and ESP32 GND are connected (a common ground is required for stable voltage measurement and signal logic)
+
+> ⚠️ Note: Without a shared GND between motor power and ESP32, voltage readings will be inaccurate and communication may fail.
+
+
 
 ---
 
