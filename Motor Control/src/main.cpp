@@ -1,87 +1,68 @@
 #include <Arduino.h>
-#include <Wire.h>
-#include <Adafruit_MotorShield.h>
 
-// Create motor shield object
-Adafruit_MotorShield AFMS = Adafruit_MotorShield();
+const int batteryPin = 2; // GPIO4 = D2 on XIAO ESP32C3
 
-// Get motors: 1 = left, 2 = right (you can flip them if needed)
-Adafruit_DCMotor *motorLeft = AFMS.getMotor(1);
-Adafruit_DCMotor *motorRight = AFMS.getMotor(2);
+// Voltage divider setup
+const float R1 = 43000.0;
+const float R2 = 10000.0;
 
-String inputBuffer = "";
+// Calibrated ADC reference voltage
+const float ADC_VREF = 2.95;
+
+// Battery voltage range
+const float EMPTY_VOLTAGE = 10.5;
+const float FULL_VOLTAGE = 13.8;
+const float LOW_BATTERY_THRESHOLD = 11.0;
+
+// Moving average filter config
+const int windowSize = 10;
+int buffer[windowSize];
+int bufIndex = 0;
+long total = 0;
 
 void setup() {
   Serial.begin(115200);
-  delay(2000);  // <-- Give FeatherWing time to power up
-  bool motorFound = false;
-  for (int i = 0; i < 5; i++) {
-    if (AFMS.begin()) {
-      motorFound = true;
-      break;
-    }
-    Serial.println("Motor shield not found. Retrying...");
-    delay(1000);
+  analogReadResolution(12); // 12-bit ADC = 0–4095
+
+  // Fill buffer with initial reading
+  int initial = analogRead(batteryPin);
+  for (int i = 0; i < windowSize; i++) {
+    buffer[i] = initial;
+    total += initial;
   }
-  if (!motorFound) {
-    Serial.println("Restarting ESP...");
-    ESP.restart();
-  }
-
-  Serial.println("Motor Shield is found. Starting...");
-
-  Serial.println("Motor Shield initialized.");
-  motorLeft->setSpeed(0);
-  motorRight->setSpeed(0);
-  motorLeft->run(RELEASE);
-  motorRight->run(RELEASE);
-}
-
-void driveMotors(int leftSpeed, int rightSpeed) {
-  leftSpeed = constrain(leftSpeed, -255, 255);
-  rightSpeed = constrain(rightSpeed, -255, 255);
-
-  // LEFT motor
-  if (leftSpeed > 0) {
-    motorLeft->run(FORWARD);
-  } else if (leftSpeed < 0) {
-    motorLeft->run(BACKWARD);
-  } else {
-    motorLeft->run(RELEASE);
-  }
-  motorLeft->setSpeed(abs(leftSpeed));
-
-  // RIGHT motor
-  if (rightSpeed > 0) {
-    motorRight->run(FORWARD);
-  } else if (rightSpeed < 0) {
-    motorRight->run(BACKWARD);
-  } else {
-    motorRight->run(RELEASE);
-  }
-  motorRight->setSpeed(abs(rightSpeed));
 }
 
 void loop() {
-  while (Serial.available()) {
-    char ch = Serial.read();
-    if (ch == '\n' || ch == '\r') {
-      if (inputBuffer.length() > 0) {
-        int spaceIndex = inputBuffer.indexOf(' ');
-        if (spaceIndex > 0) {
-          int x = inputBuffer.substring(0, spaceIndex).toInt();     // turn
-          int y = inputBuffer.substring(spaceIndex + 1).toInt();    // forward/back
+  total -= buffer[bufIndex];
+  buffer[bufIndex] = analogRead(batteryPin);
+  total += buffer[bufIndex];
+  bufIndex = (bufIndex + 1) % windowSize;
 
-          // Differential drive math
-          int left = constrain(y + x, -255, 255);
-          int right = constrain(y - x, -255, 255);
+  float rawAvg = total / (float)windowSize;
 
-          driveMotors(left, right);
-        }
-      }
-      inputBuffer = "";
-    } else {
-      inputBuffer += ch;
-    }
+  // Calculate ADC voltage and battery voltage
+  float v_out = rawAvg / 4095.0 * ADC_VREF;
+  float batteryVoltage = v_out * (R1 + R2) / R2;
+  batteryVoltage *= 0.96;  // Calibrated
+
+  // Calculate charge %
+  float percent = (batteryVoltage - EMPTY_VOLTAGE) / (FULL_VOLTAGE - EMPTY_VOLTAGE) * 100.0;
+  percent = constrain(percent, 0.0, 100.0);
+
+  // Print results
+  Serial.print("Battery Voltage: ");
+  Serial.print(batteryVoltage, 2);
+  Serial.print(" V | Charge: ");
+  Serial.print(percent, 1);
+  Serial.print(" % | v_out: ");
+  Serial.print(v_out, 2);
+  Serial.print(" V | raw_avg: ");
+  Serial.println(rawAvg, 0);
+
+  // Low battery warning
+  if (batteryVoltage < LOW_BATTERY_THRESHOLD) {
+    Serial.println("⚠️ LOW BATTERY! Please recharge or shut down system.");
   }
+
+  delay(1000);
 }
