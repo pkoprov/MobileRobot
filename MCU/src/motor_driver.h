@@ -1,4 +1,5 @@
 #pragma once
+
 void setupMotors();
-void driveMotors(int leftSpeed, int rightSpeed);
+void driveMotors(float leftSpeed, float rightSpeed);
 void processSerialCommand();
