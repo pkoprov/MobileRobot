@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/Diagram.png" alt="ESP32 Robot Controller Diagram" width="600"/>
+  <img src="assets/Diagram.png" alt="ESP32 Robot Controller Architecture" width="600"/>
 </p>
 
 <h1 align="center">ESP32 Robot Controller with Joystick 🎮</h1>
@@ -37,7 +37,9 @@ Mobile Robot/
 │
 ├── Motor Control/                  # PlatformIO project for ESP32 firmware
 │   ├── src/
-│   │   └── main.cpp                # Firmware: handles motor control via serial
+│   │   ├── main.cpp                # Main loop
+│   │   ├── motor_driver.cpp/h      # Motor logic and serial input parsing
+│   │   ├── battery_level.cpp/h     # Battery monitoring with smoothing + alerts
 │   ├── platformio.ini              # ESP32 build config (Seeed XIAO ESP32-C3)
 │   └── ...                         # Other PlatformIO folders (.pio, lib, test, etc.)
 │
@@ -54,7 +56,8 @@ This project is designed with future ROS 2 integration in mind, allowing the ESP
 
 ### ✅ Current Architecture
 - Joystick axis data is sent directly to the ESP32 via serial over USB.
-- The ESP32 applies differential drive logic and controls the motors accordingly.
+- The ESP32 applies differential drive logic and controls the motors.
+- It also performs battery voltage monitoring using ADC, smoothing with a moving average, and alerts via serial when battery is low.
 - Communication uses a simple `"X Y\n"` format for motor speeds from -255 to 255.
 
 ### 🚀 Future ROS 2 Upgrade Path
@@ -141,7 +144,6 @@ Use `joystick_to_serial.py` to:
 sudo apt install joystick
 export SDL_JOYSTICK_DEVICE=/dev/input/js0
 ```
-> You may also want to add it to `.bashrc` to automatically set SDL joystick device for Pygame.
 
 ---
 
@@ -155,6 +157,13 @@ right_speed = y - x
 - `x` controls turning
 - `y` controls forward/backward
 - Values are clamped to `-255 to 255`
+
+---
+
+## 🪫 Battery Monitoring
+The ESP32 reads the main battery voltage via an analog pin. A moving average filter ensures smooth readings. If voltage drops below `11.0 V`, a warning is printed to the serial console.
+
+You can optionally use this to shut down motors, flash an LED, or send battery data back to the host via serial.
 
 ---
 
