@@ -10,6 +10,10 @@ def find_esp32_port():
     ports = serial.tools.list_ports.comports()
 
     print("Available ports:")
+    if system == "Linux":
+        if os.path.exists("/dev/ttyTHS0"):
+            return "/dev/ttyTHS0"
+        
     for p in ports:
         print(f"{p.device} — {p.description} — VID:{p.vid} PID:{p.pid}")
 
@@ -21,9 +25,6 @@ def find_esp32_port():
             if port.vid == 0x303A:
                 return port.device
 
-    if system == "Linux":
-        if os.path.exists("/dev/ttyTHS0"):
-            return "/dev/ttyTHS0"
 
     return None
 
@@ -58,7 +59,12 @@ while True:
 
     serial_cmd = f"{x} {y}\n"
 
+    if serial_cmd == last_cmd:
+        continue
+    # Send command to ESP32
     ser.write(serial_cmd.encode())
     print(f"Sent: {serial_cmd.strip()}")
+
+    last_cmd = serial_cmd
 
     time.sleep(0.05)
