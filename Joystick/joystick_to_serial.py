@@ -3,22 +3,28 @@ import pygame
 import serial
 import serial.tools.list_ports
 import time
+import os
 
 def find_esp32_port():
     system = platform.system()
     ports = serial.tools.list_ports.comports()
 
-    for port in ports:
-        port_name = port.device
-        description = port.description.lower()
+    print("Available ports:")
+    if system == "Linux":
+        if os.path.exists("/dev/ttyTHS0"):
+            return "/dev/ttyTHS0"
+        
+    for p in ports:
+        print(f"{p.device} — {p.description} — VID:{p.vid} PID:{p.pid}")
 
+    for port in ports:
         if system == "Windows":
-            if "usb serial" in description or "esp32" in description:
-                return port_name
+            if "usb serial" in port.description.lower() or "esp32" in port.description.lower():
+                return port.device
         elif system == "Linux":
-            # Jetson/Xavier typically uses /dev/ttyUSBx or /dev/ttyACMx
             if port.vid == 0x303A:
-                return port_name
+                return port.device
+
 
     return None
 
@@ -42,8 +48,6 @@ time.sleep(2)  # wait for ESP32 reset
 
 print("Ready. Use joystick to control robot.")
 
-last_cmd = ''
-
 while True:
     pygame.event.pump() 
 
@@ -51,13 +55,9 @@ while True:
     x = joystick.get_axis(0)  # Left stick horizontal
     y = joystick.get_axis(1)  # Left stick vertical
 
-    Xspeed = int(min(x, 1.0) * 255)
-    Yspeed = int(min(y, 1.0) * 255)
+    serial_cmd = f"{x} {y}\n"
 
-    cmd = f"{Xspeed} {Yspeed}"
-
-    serial_cmd = f"{cmd}\n"
-
+    # Send command to ESP32
     ser.write(serial_cmd.encode())
     print(f"Sent: {serial_cmd.strip()}")
 
