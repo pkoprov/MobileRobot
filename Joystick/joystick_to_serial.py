@@ -48,8 +48,6 @@ time.sleep(2)  # wait for ESP32 reset
 
 print("Ready. Use joystick to control robot.")
 
-last_cmd = ''
-
 while True:
     pygame.event.pump() 
 
@@ -59,12 +57,8 @@ while True:
 
     serial_cmd = f"{x} {y}\n"
 
-    if serial_cmd == last_cmd:
-        continue
     # Send command to ESP32
     ser.write(serial_cmd.encode())
     print(f"Sent: {serial_cmd.strip()}")
-
-    last_cmd = serial_cmd
 
     time.sleep(0.05)

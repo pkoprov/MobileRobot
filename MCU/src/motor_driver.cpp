@@ -8,6 +8,7 @@ Adafruit_DCMotor *motorLeft = AFMS.getMotor(1);
 Adafruit_DCMotor *motorRight = AFMS.getMotor(2);
 
 String inputBuffer = "";
+String lastInput = "";
 unsigned long lastCommandTime = 0;
 const unsigned long commandTimeout = 1000;
 bool motorsAreRunning = false;
@@ -81,9 +82,13 @@ void processSerialCommand() {
         float left = constrain(y + x, -1.0, 1.0);
         float right = constrain(y - x, -1.0, 1.0);
 
-        Serial.println("received: " + inputBuffer);
-
         driveMotors(left, right);
+
+        if (lastInput != inputBuffer) {
+          Serial.println("Command: " + lastInput);
+        }
+        lastInput = inputBuffer;
+
       } else {
         Serial1.println("Invalid input: " + inputBuffer);
         Serial.println("Invalid input: " + inputBuffer);
