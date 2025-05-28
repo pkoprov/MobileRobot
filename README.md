@@ -35,7 +35,7 @@ Mobile Robot/
 ├── Joystick/
 │   └── joystick_to_serial.py       # Python script to send joystick data to ESP32
 │
-├── Motor Control/                  # PlatformIO project for ESP32 firmware
+├── MCU/                            # PlatformIO project for ESP32 firmware
 │   ├── src/
 │   │   ├── main.cpp                # Main loop
 │   │   ├── motor_driver.cpp/h      # Motor logic and serial input parsing
@@ -43,9 +43,10 @@ Mobile Robot/
 │   ├── platformio.ini              # ESP32 build config (Seeed XIAO ESP32-C3)
 │   └── ...                         # Other PlatformIO folders (.pio, lib, test, etc.)
 │
-├── Diagram.png                     # System wiring diagram
-├── Diagram.pptx                    # Editable PowerPoint version of diagram
-└── README.md                       # You are here :)
+└── assets/
+    ├── Diagram.png                 # System wiring diagram
+    ├── Diagram.pptx                # Editable PowerPoint version of diagram
+    └── README.md                   # You are here :)
 ```
 
 ---
