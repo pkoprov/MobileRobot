@@ -42,7 +42,7 @@ pygame.joystick.init()
 joystick = pygame.joystick.Joystick(0)
 joystick.init()
 
-# Serial port — change to match your ESP32 COM port
+# Serial port (auto-detected above)
 ser = serial.Serial(port, 115200, timeout=0.1)
 time.sleep(2)  # wait for ESP32 reset
 
