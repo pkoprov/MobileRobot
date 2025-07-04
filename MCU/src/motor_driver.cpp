@@ -85,7 +85,7 @@ void processSerialCommand() {
         driveMotors(left, right);
 
         if (lastInput != inputBuffer) {
-          Serial.println("Command: " + lastInput);
+          Serial.println("Command: " + inputBuffer);
         }
         lastInput = inputBuffer;
 
