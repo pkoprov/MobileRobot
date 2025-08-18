@@ -72,7 +72,7 @@ This project is designed with future ROS 2 integration in mind, allowing the ESP
 
 Additional plans include:
 - Publishing encoder feedback from ESP32 for `odom`
-- Creating **an** Isaac Sim digital twin for development and validation
+- Creating an Isaac Sim digital twin for development and validation
 
 ---
 
