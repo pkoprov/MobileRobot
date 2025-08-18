@@ -1,58 +1,141 @@
 #include <Arduino.h>
+#include "commands.h"
 #include "motor_driver.h"
 #include "encoder_driver.h"
+#include "diff_controller.h"
 
-#define FAST_SPEED   255  // Slightly slower fast speed
-#define SLOW_SPEED    20  // Reduced further
-#define SLOW_ZONE   TARGET_TICKS-1000   // Enter slow zone earlier
+// ---------- Serial parsing state ----------
+int arg = 0;
+int argIdx = 0;        // <— was `index`
+char chr;
+char cmd;
+char argv1[16];
+char argv2[16];
+long arg1 = 0;
+long arg2 = 0;
 
-const int TICKS_PER_REV = 1974;
-const int TARGET_TICKS = TICKS_PER_REV*10;
+static inline void resetCommand() {
+  cmd = 0;
+  memset(argv1, 0, sizeof(argv1));
+  memset(argv2, 0, sizeof(argv2));
+  arg1 = arg2 = 0;
+  arg = 0;
+  argIdx = 0;         // <— was `index = 0`
+}
 
-bool motorStoppedR = false;
-bool motorStoppedL = false;
+// ---------- Run a parsed command ----------
+int runCommand() {
+  int i = 0;
+  char *p = argv1;
+  char *str;
+  int pid_args[4];
+
+  arg1 = atol(argv1);
+  arg2 = atol(argv2);
+
+  switch (cmd) {
+    case GET_BAUDRATE:  Serial.println(115200); break;
+    case PING:          Serial.println(1);      break;
+
+    case READ_ENCODERS:
+      Serial.print(readEncoder(LEFT));
+      Serial.print(' ');
+      Serial.println(readEncoder(RIGHT));
+      break;
+
+    case RESET_ENCODERS:
+      resetEncoders();
+      resetPID();
+      Serial.println("OK");
+      break;
+
+    case MOTOR_SPEEDS:
+      if (arg1 == 0 && arg2 == 0) {
+        setMotorSpeeds(0, 0);
+        resetPID();
+        moving = 0;
+      } else {
+        moving = 1;
+      }
+      leftPID.TargetTicksPerFrame  = arg1;
+      rightPID.TargetTicksPerFrame = arg2;
+      Serial.println("OK");
+      break;
+
+    case MOTOR_RAW_PWM:
+      resetPID();
+      moving = 0;
+      setMotorSpeeds((int)arg1, (int)arg2);
+      Serial.println("OK");
+      break;
+
+    case UPDATE_PID: {
+      while ((str = strtok_r(p, ":", &p)) != nullptr && i < 4) {
+        pid_args[i++] = atoi(str);
+      }
+      if (i == 4) {
+        Kp = pid_args[0];
+        Kd = pid_args[1];
+        Ki = pid_args[2];
+        Ko = pid_args[3];
+        Serial.println("OK");
+      } else {
+        Serial.println("ERR");
+      }
+      break;
+    }
+
+    default:
+      Serial.println("Invalid Command");
+      break;
+  }
+  return 0;
+}
+
+// ---------- Setup ----------
+unsigned long nextPID = PID_INTERVAL;
 
 void setup() {
   Serial.begin(115200);
-  delay(1000);
-  Serial.println("🔁 Spinning motors for 1 revolution...");
+  delay(500);
 
   initMotorController();
   initEncoders();
   resetEncoders();
+  resetPID();
 
-  setMotorSpeed(RIGHT, FAST_SPEED);
+  Serial.println("READY");
 }
 
+// ---------- Main loop ----------
 void loop() {
-  
-  long TicksL = abs(readEncoder(LEFT));
-  long TicksR = abs(readEncoder(RIGHT));
+  while (Serial.available() > 0) {
+    chr = Serial.read();
 
-  if (!motorStoppedR) {
-    if (TicksR < SLOW_ZONE) {
-      setMotorSpeed(RIGHT, FAST_SPEED);
-    } else if (TicksR < TARGET_TICKS) {
-      setMotorSpeed(RIGHT, SLOW_SPEED);
-    } else {
-      setMotorSpeed(RIGHT, 0);
-      motorStoppedR = true;
-      Serial.println("🛑 Right motor target reached. Right motor stopped.");
+    if (chr == 13) {                // CR ends command
+      if (arg == 1) argv1[argIdx] = 0;
+      else if (arg == 2) argv2[argIdx] = 0;
+      runCommand();
+      resetCommand();
+    }
+    else if (chr == ' ') {          // space splits args
+      if (arg == 0) arg = 1;
+      else if (arg == 1) {
+        argv1[argIdx] = 0;
+        arg = 2;
+        argIdx = 0;
+      }
+      continue;
+    }
+    else {
+      if (arg == 0)        cmd = chr;                 // single-letter command
+      else if (arg == 1)  { argv1[argIdx++] = chr; }  // collect arg1
+      else if (arg == 2)  { argv2[argIdx++] = chr; }  // collect arg2
     }
   }
-  if (!motorStoppedL) {
-    if (TicksL < SLOW_ZONE) {
-      setMotorSpeed(LEFT, FAST_SPEED);
-    } else if (TicksL < TARGET_TICKS) {
-      setMotorSpeed(LEFT, SLOW_SPEED);
-    } else {
-      setMotorSpeed(LEFT, 0);
-      motorStoppedL = true;
-      Serial.println("🛑 Left motor target reached. Left motor stopped.");
-    } 
-  }
 
-  // Always print ticks so you can manually back it up
-  Serial.printf("📈 R: %6ld | L: %6ld | Target: %d\n", TicksR, TicksL, TARGET_TICKS);
-  delay(200);
+  if (millis() > nextPID) {
+    updatePID();
+    nextPID += PID_INTERVAL;
+  }
 }
