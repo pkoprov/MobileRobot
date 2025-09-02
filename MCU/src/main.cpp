@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "gpio.h"
 #include "commands.h"
 #include "motor_driver.h"
 #include "encoder_driver.h"
@@ -48,8 +49,12 @@ int runCommand() {
       resetPID();
       Serial.println("OK");
       break;
-
     case MOTOR_SPEEDS:
+      Serial.print("CMD m args: ");
+      Serial.print(arg1);
+      Serial.print(',');
+      Serial.println(arg2);
+
       if (arg1 == 0 && arg2 == 0) {
         setMotorSpeeds(0, 0);
         resetPID();
@@ -63,6 +68,11 @@ int runCommand() {
       break;
 
     case MOTOR_RAW_PWM:
+      Serial.print("CMD p args: ");
+      Serial.print(arg1);
+      Serial.print(',');
+      Serial.println(arg2);
+
       resetPID();
       moving = 0;
       setMotorSpeeds((int)arg1, (int)arg2);

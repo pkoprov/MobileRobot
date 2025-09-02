@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "gpio.h"
 #include "encoder_driver.h"
 
 // Encoder tick counters

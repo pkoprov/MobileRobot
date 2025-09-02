@@ -1,3 +1,4 @@
+#include "gpio.h"
 #include "diff_controller.h"
 #include "encoder_driver.h"
 #include "motor_driver.h"
@@ -71,7 +72,14 @@ void updatePID() {
     return;
   }
 
-  moving = 1;
+  // Calculate deltas BEFORE doSide updates PrevEnc
+  long leftPrevEnc = leftPID.PrevEnc;
+  long rightPrevEnc = rightPID.PrevEnc;
+  long leftNow = readEncoder(LEFT);
+  long rightNow = readEncoder(RIGHT);
+  long leftTicks = leftNow - leftPrevEnc;
+  long rightTicks = rightNow - rightPrevEnc;
+
   doSide(leftPID,  LEFT);
   doSide(rightPID, RIGHT);
 }
