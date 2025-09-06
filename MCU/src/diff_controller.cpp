@@ -12,14 +12,16 @@ int Kd = 12;
 int Ki = 0;
 int Ko = 50;        // output = (Kp*e + Kd*de + Ki*sum)/Ko
 
+const int  MAX_PWM   = 255;
+
 volatile int moving = 0;
 
 pid_control_t leftPID  = {0, 0, 0, 0, 0, 0};
 pid_control_t rightPID = {0, 0, 0, 0, 0, 0};
 
 static inline int clampPWM(long v) {
-  if (v > 255)  return 255;
-  if (v < -255) return -255;
+  if (v >  MAX_PWM) return  MAX_PWM;
+  if (v < -MAX_PWM) return -MAX_PWM;
   return (int)v;
 }
 
