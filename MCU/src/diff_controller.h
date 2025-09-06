@@ -3,7 +3,7 @@
 
 
 // PID loop rate
-#define PID_RATE 30                      // Hz
+#define PID_RATE 100                      // Hz
 extern const int PID_INTERVAL;           // ms (computed)
 
 // PID gains (integer style, Ko = scaling)
