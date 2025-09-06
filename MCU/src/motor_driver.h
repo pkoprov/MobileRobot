@@ -1,5 +1,5 @@
 #pragma once
 
-void setupMotors();
-void driveMotors(float leftSpeed, float rightSpeed);
-void processSerialCommand();
+void initMotorController();
+void setMotorSpeed(int i, int spd);
+void setMotorSpeeds(int left, int right);
