@@ -58,9 +58,6 @@ int runCommand() {
       if (arg1 == 0 && arg2 == 0) {
         setMotorSpeeds(0, 0);
         resetPID();
-        moving = 0;
-      } else {
-        moving = 1;
       }
       leftPID.TargetTicksPerFrame  = arg1;
       rightPID.TargetTicksPerFrame = arg2;
@@ -74,7 +71,6 @@ int runCommand() {
       Serial.println(arg2);
 
       resetPID();
-      moving = 0;
       setMotorSpeeds((int)arg1, (int)arg2);
       Serial.println("OK");
       break;
