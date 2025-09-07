@@ -10,7 +10,7 @@ SETTLING_BAND = 0.10 # +/-10% settling band (change to 0.05 for tighter)
 TARGETS = [25, 28, 32, 40]  # step targets to test
 
 # Chosen gains (from your sweep)
-KP, KD, KI, KO = 1000, 120, 80, 50
+KP, KD, KI, KO = 100, 12, 8, 5
 # ---------------------------------------------
 
 def send(ser, s): ser.write(s.encode())

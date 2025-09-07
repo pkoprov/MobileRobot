@@ -7,10 +7,10 @@
 const int PID_INTERVAL = 1000 / PID_RATE;
 
 // Tunables (start conservative)
-long Kp = 1000;
-long Kd = 120;
-long Ki = 80;
-long Ko = 50;        // output = (Kp*e + Kd*de + Ki*sum)/Ko
+long Kp = 100;
+long Kd = 12;
+long Ki = 8;
+long Ko = 5;        // output = (Kp*e + Kd*de + Ki*sum)/Ko
 
 const int  MAX_PWM   = 255;
 
