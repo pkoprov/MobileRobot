@@ -2,77 +2,101 @@
 #include "gpio.h"
 #include "encoder_driver.h"
 
-// Encoder tick counters
-volatile long leftCount = 0;
+// ---- Portable fast read for all ESP32 variants (incl. C3/S2/S3) ----
+#if defined(ARDUINO_ARCH_ESP32)
+  #include "driver/gpio.h"
+  static inline int READ_PIN(int pin) {
+    return gpio_get_level((gpio_num_t)pin);   // ISR-safe
+  }
+#else
+  #define READ_PIN(p) digitalRead(p)
+#endif
+
+// Encoder tick counters (shared with ISRs)
+volatile long leftCount  = 0;
 volatile long rightCount = 0;
 
-// Previous state for encoders (2 bits: A << 1 | B)
-volatile uint8_t lastLeftState = 0;
-volatile uint8_t lastRightState = 0;
-
-// Quadrature lookup table: delta = enc_table[(old << 2) | new]
-const int8_t enc_table[16] = {
-   0, -1,  1,  0,
-   1,  0,  0, -1,
-  -1,  0,  0,  1,
-   0,  1, -1,  0
-};
-
-// ISR for left encoder (both A and B pins trigger this)
-void IRAM_ATTR handleLeftEncoder() {
-  uint8_t A = digitalRead(LEFT_A_PIN);
-  uint8_t B = digitalRead(LEFT_B_PIN);
-  uint8_t newState = (A << 1) | B;
-  uint8_t index = (lastLeftState << 2) | newState;
-  leftCount += enc_table[index];
-  lastLeftState = newState;
+// -------- ISRs: only A pins generate interrupts --------
+// ---- both channels, edge-based 4× decoding ----
+void IRAM_ATTR leftA_ISR() {
+  int a = READ_PIN(LEFT_A_PIN);
+  int b = READ_PIN(LEFT_B_PIN);
+  // On A edge: if A == B -> +1 else -1   (flip sign if needed)
+  leftCount += (a == b) ? -1 : +1;
 }
 
-// ISR for right encoder
-void IRAM_ATTR handleRightEncoder() {
-  uint8_t A = digitalRead(RIGHT_A_PIN);
-  uint8_t B = digitalRead(RIGHT_B_PIN);
-  uint8_t newState = (A << 1) | B;
-  uint8_t index = (lastRightState << 2) | newState;
-  rightCount += enc_table[index];
-  lastRightState = newState;
+void IRAM_ATTR leftB_ISR() {
+  int a = READ_PIN(LEFT_A_PIN);
+  int b = READ_PIN(LEFT_B_PIN);
+  // On B edge: if A != B -> +1 else -1   (complementary rule)
+  leftCount += (a != b) ? -1 : +1;
 }
 
+void IRAM_ATTR rightA_ISR() {
+  int a = READ_PIN(RIGHT_A_PIN);
+  int b = READ_PIN(RIGHT_B_PIN);
+  rightCount += (a == b) ? -1 : +1;
+}
+
+void IRAM_ATTR rightB_ISR() {
+  int a = READ_PIN(RIGHT_A_PIN);
+  int b = READ_PIN(RIGHT_B_PIN);
+  rightCount += (a != b) ? -1 : +1;
+}
+
+// -------------------- Setup --------------------
 void initEncoders() {
-  pinMode(LEFT_A_PIN, INPUT_PULLUP);
-  pinMode(LEFT_B_PIN, INPUT_PULLUP);
+  pinMode(LEFT_A_PIN,  INPUT_PULLUP);
+  pinMode(LEFT_B_PIN,  INPUT_PULLUP);
   pinMode(RIGHT_A_PIN, INPUT_PULLUP);
   pinMode(RIGHT_B_PIN, INPUT_PULLUP);
 
-  // Initialize last states
-  lastLeftState  = (digitalRead(LEFT_A_PIN) << 1) | digitalRead(LEFT_B_PIN);
-  lastRightState = (digitalRead(RIGHT_A_PIN) << 1) | digitalRead(RIGHT_B_PIN);
-
-  // Attach interrupts to both A and B channels
-  attachInterrupt(digitalPinToInterrupt(LEFT_A_PIN), handleLeftEncoder, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(LEFT_B_PIN), handleLeftEncoder, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(RIGHT_A_PIN), handleRightEncoder, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(RIGHT_B_PIN), handleRightEncoder, CHANGE);
+attachInterrupt(digitalPinToInterrupt(LEFT_A_PIN),  leftA_ISR,  CHANGE);
+attachInterrupt(digitalPinToInterrupt(LEFT_B_PIN),  leftB_ISR,  CHANGE);
+attachInterrupt(digitalPinToInterrupt(RIGHT_A_PIN), rightA_ISR, CHANGE);
+attachInterrupt(digitalPinToInterrupt(RIGHT_B_PIN), rightB_ISR, CHANGE);
 }
 
-long readEncoder(int i) {
-  if (i == LEFT) {
-    return leftCount;
-  } else if (i == RIGHT) {
-    return rightCount;
-  }
-  return 0;
+// -------------------- API --------------------
+long readEncoder(int side) {
+#if defined(ARDUINO_ARCH_ESP32)
+  static portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+  portENTER_CRITICAL(&mux);
+  long v = (side == LEFT) ? leftCount : rightCount;
+  portEXIT_CRITICAL(&mux);
+  return v;
+#else
+  noInterrupts();
+  long v = (side == LEFT) ? leftCount : rightCount;
+  interrupts();
+  return v;
+#endif
 }
 
-void resetEncoder(int i) {
-  if (i == LEFT) {
-    leftCount = 0;
-  } else if (i == RIGHT) {
-    rightCount = 0;
-  }
+void resetEncoder(int side) {
+#if defined(ARDUINO_ARCH_ESP32)
+  static portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+  portENTER_CRITICAL(&mux);
+  if (side == LEFT)  leftCount = 0;
+  else               rightCount = 0;
+  portEXIT_CRITICAL(&mux);
+#else
+  noInterrupts();
+  if (side == LEFT)  leftCount = 0;
+  else               rightCount = 0;
+  interrupts();
+#endif
 }
 
 void resetEncoders() {
-  leftCount = 0;
-  rightCount = 0;
+#if defined(ARDUINO_ARCH_ESP32)
+  static portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+  portENTER_CRITICAL(&mux);
+  leftCount = rightCount = 0;
+  portEXIT_CRITICAL(&mux);
+#else
+  noInterrupts();
+  leftCount = rightCount = 0;
+  interrupts();
+#endif
 }
