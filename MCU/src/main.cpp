@@ -14,6 +14,7 @@ char argv1[16];
 char argv2[16];
 long arg1 = 0;
 long arg2 = 0;
+bool raw_pwm = 0;   // 1 if in raw PWM mode
 
 static inline void resetCommand() {
   cmd = 0;
@@ -51,6 +52,8 @@ int runCommand() {
       break;
 
     case MOTOR_SPEEDS: {
+      raw_pwm = 0;  // exit raw PWM mode if active
+      // Expect two floats (or integers) in args
       // Parse as floating to support either normalized [-1..1] or raw ticks
       double s1 = strtod(argv1, nullptr);
       double s2 = strtod(argv2, nullptr);
@@ -89,6 +92,7 @@ int runCommand() {
       Serial.println(arg2);
 
       resetPID();
+      raw_pwm = 1;
       setMotorSpeeds((int)arg1, (int)arg2);
       Serial.println("OK");
       break;
@@ -178,7 +182,7 @@ void loop() {
     }
   }
 
-  if (millis() > nextPID) {
+  if (millis() > nextPID && !raw_pwm) {
     updatePID();
     nextPID += PID_INTERVAL;
   }
