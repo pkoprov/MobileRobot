@@ -1,5 +1,5 @@
 # step_verify.py
-import serial, time, numpy as np
+import re, serial, time, numpy as np
 import matplotlib.pyplot as plt
 
 # ---------------- USER CONFIG ----------------
@@ -8,10 +8,21 @@ BAUD = 115200
 RUN_TIME = 5.0       # seconds to log for each step
 SETTLING_BAND = 0.10 # +/-10% settling band (change to 0.05 for tighter)
 TARGETS = [25, 28, 32, 40]  # step targets to test
+CPP_GAINS_PATH = r"MCU\src\diff_controller.cpp"  # <- your file
 
-# Chosen gains (from your sweep)
-KP, KD, KI, KO = 100, 12, 8, 5
 # ---------------------------------------------
+def read_gains_from_cpp(path):
+    """
+    Parse 'long Kp = ...; long Kd = ...; long Ki = ...; long Ko = ...;'
+    from diff_controller.cpp and return ints (kp,kd,ki,ko).
+    """
+    text = open(path, "r", encoding="utf-8", errors="ignore").read()
+    def grab(name):
+        m = re.search(rf"\blong\s+{name}\s*=\s*(-?\d+)\s*;", text)
+        if not m:
+            raise ValueError(f"{name} not found in {path}")
+        return int(m.group(1))
+    return grab("Kp"), grab("Kd"), grab("Ki"), grab("Ko")
 
 def send(ser, s): ser.write(s.encode())
 def rl(ser):
@@ -97,6 +108,9 @@ def metrics(T, Target, Delta, Sent, settling_band=SETTLING_BAND):
 def main():
     ser = serial.Serial(PORT, BAUD, timeout=0.1)
     time.sleep(1.0)
+
+    KP, KD, KI, KO = read_gains_from_cpp(CPP_GAINS_PATH)
+    print(f"Using gains from CPP: Kp={KP}, Kd={KD}, Ki={KI}, Ko={KO}")
 
     # # set chosen gains
     # set_pid(ser, KP, KD, KI, KO)
