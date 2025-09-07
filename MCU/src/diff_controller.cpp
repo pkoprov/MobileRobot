@@ -19,6 +19,10 @@ volatile int moving = 0;
 pid_control_t leftPID  = {0, 0, 0, 0, 0, 0};
 pid_control_t rightPID = {0, 0, 0, 0, 0, 0};
 
+// telemetry throttle
+static int print_div = 3;
+static int loop_ctr  = 0;
+
 static inline int clampPWM(long v) {
   if (v >  MAX_PWM) return  MAX_PWM;
   if (v < -MAX_PWM) return -MAX_PWM;
@@ -74,14 +78,16 @@ void updatePID() {
     return;
   }
 
-  // Calculate deltas BEFORE doSide updates PrevEnc
-  long leftPrevEnc = leftPID.PrevEnc;
-  long rightPrevEnc = rightPID.PrevEnc;
-  long leftNow = readEncoder(LEFT);
-  long rightNow = readEncoder(RIGHT);
-  long leftTicks = leftNow - leftPrevEnc;
-  long rightTicks = rightNow - rightPrevEnc;
-
   doSide(leftPID,  LEFT);
   doSide(rightPID, RIGHT);
+
+  // --- Optional telemetry (LEFT only, every 3rd loop) for your Python parser
+  // Uncomment if you need it; matches "Target= ... delta= ... Sent=" pattern
+
+  if ((loop_ctr++ % print_div) == 0) {
+    Serial.print("L: ");
+    Serial.print(" Target="); Serial.print(leftPID.TargetTicksPerFrame);
+    Serial.print(" Err="); Serial.print(leftPID.PrevErr);
+    Serial.print(" Sent="); Serial.println(leftPID.Output);
+  }
 }
