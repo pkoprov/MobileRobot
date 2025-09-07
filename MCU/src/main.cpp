@@ -58,10 +58,7 @@ int runCommand() {
       if (arg1 == 0 && arg2 == 0) {
         setMotorSpeeds(0, 0);
         resetPID();
-        moving = 0;
-      } else {
-        moving = 1;
-      }
+      } 
       leftPID.TargetTicksPerFrame  = arg1;
       rightPID.TargetTicksPerFrame = arg2;
       Serial.println("OK");
@@ -74,15 +71,28 @@ int runCommand() {
       Serial.println(arg2);
 
       resetPID();
-      moving = 0;
       setMotorSpeeds((int)arg1, (int)arg2);
       Serial.println("OK");
       break;
 
     case UPDATE_PID: {
-      while ((str = strtok_r(p, ":", &p)) != nullptr && i < 4) {
-        pid_args[i++] = atoi(str);
+    // combine argv1 and argv2 (argv2 holds the rest of the line)
+      char buf[64];
+      if (argv2[0] != '\0') {
+        snprintf(buf, sizeof(buf), "%s %s", argv1, argv2);
+      } else {
+        snprintf(buf, sizeof(buf), "%s", argv1);
       }
+
+      int pid_args[4] = {0,0,0,0};
+      int i = 0;
+      char *saveptr = nullptr;
+      char *tok = strtok_r(buf, " \t", &saveptr); // split on spaces/tabs
+      while (tok != nullptr && i < 4) {
+        pid_args[i++] = atoi(tok);
+        tok = strtok_r(nullptr, " \t", &saveptr);
+      }
+
       if (i == 4) {
         Kp = pid_args[0];
         Kd = pid_args[1];
@@ -134,6 +144,12 @@ void loop() {
         argv1[argIdx] = 0;
         arg = 2;
         argIdx = 0;
+      }
+      else if (arg == 2) {
+        // Preserve spaces inside argv2 so tokenization later works.
+        if (argIdx < (int)sizeof(argv2) - 1) {
+          argv2[argIdx++] = ' ';
+        }
       }
       continue;
     }

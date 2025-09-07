@@ -3,6 +3,6 @@
 
 // Function declarations
 void initEncoders();
-long readEncoder(int i);
-void resetEncoder(int i);
+long readEncoder(int side);
+void resetEncoder(int side);
 void resetEncoders();
