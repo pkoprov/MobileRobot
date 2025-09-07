@@ -13,4 +13,4 @@
 #define MOTOR_SPEEDS   'm'   // closed-loop motor control (ticks/frame target)
 #define MOTOR_RAW_PWM  'p'   // open-loop raw PWM values
 
-#define UPDATE_PID     'u'   // update PID constants (Kp:Kd:Ki:Ko)
+#define UPDATE_PID     'u'   // update PID constants ("u Kp Kd Ki Ko")
