@@ -53,7 +53,7 @@ static void doSide(pid_control_t& c, int side) {
   // Read encoder since last loop
   c.Encoder = readEncoder(side);
   long delta = c.Encoder - c.PrevEnc;     // ticks in last interval
-  const long maxStep = 2 * c.TargetTicksPerFrame + 5; // tune
+  const long maxStep = 2 * labs(c.TargetTicksPerFrame) + 5; // tune
   if (delta >  maxStep) delta =  maxStep;
   if (delta < -maxStep) delta = -maxStep;
 
