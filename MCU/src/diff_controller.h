@@ -17,6 +17,8 @@ typedef struct {
   long TargetTicksPerFrame;     // command input (ticks per PID interval)
   long Encoder;                 // last encoder reading
   long PrevEnc;                 // previous encoder reading
+  long PrevDelta;               // previous measured delta
+  long Dterm;                   // filtered derivative
   long PrevErr;                 // previous error
   long Iterm;                   // integral accumulator
   int  Output;                  // last PWM output (-255..255)
