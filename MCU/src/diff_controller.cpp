@@ -20,7 +20,7 @@ pid_control_t leftPID  = {0, 0, 0, 0, 0, 0};
 pid_control_t rightPID = {0, 0, 0, 0, 0, 0};
 
 // telemetry throttle
-static int print_div = 3;
+static int print_div = 6;  // print every Nth loop
 static int loop_ctr  = 0;
 
 static inline int clampPWM(long v) {
@@ -83,11 +83,10 @@ void updatePID() {
 
   // --- Optional telemetry (LEFT only, every 3rd loop) for your Python parser
   // Uncomment if you need it; matches "Target= ... delta= ... Sent=" pattern
-
   if ((loop_ctr++ % print_div) == 0) {
-    Serial.print("L: ");
-    Serial.print(" Target="); Serial.print(leftPID.TargetTicksPerFrame);
-    Serial.print(" Err="); Serial.print(leftPID.PrevErr);
-    Serial.print(" Sent="); Serial.println(leftPID.Output);
+    // Serial.print("E: ");
+    // Serial.print(" Target="); Serial.print(rightPID.TargetTicksPerFrame);
+    // Serial.print(" Err="); Serial.print(rightPID.PrevErr);
+    // Serial.print(" Sent="); Serial.println(rightPID.Output);
   }
 }
