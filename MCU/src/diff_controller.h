@@ -7,7 +7,7 @@
 extern const int PID_INTERVAL;           // ms (computed)
 
 // PID gains (integer style, Ko = scaling)
-extern int Kp, Kd, Ki, Ko;
+extern long Kp, Kd, Ki, Ko;
 
 // movement flag (0 when raw PWM is active or both targets zero)
 extern volatile int moving;
