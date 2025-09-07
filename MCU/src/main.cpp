@@ -49,20 +49,38 @@ int runCommand() {
       resetPID();
       Serial.println("OK");
       break;
-    case MOTOR_SPEEDS:
-      Serial.print("CMD m args: ");
-      Serial.print(arg1);
-      Serial.print(',');
-      Serial.println(arg2);
 
-      if (arg1 == 0 && arg2 == 0) {
+    case MOTOR_SPEEDS: {
+      // Parse as floating to support either normalized [-1..1] or raw ticks
+      double s1 = strtod(argv1, nullptr);
+      double s2 = strtod(argv2, nullptr);
+
+      // Echo what we parsed
+      Serial.print("CMD m args: ");
+      Serial.print(s1, 3);
+      Serial.print(',');
+      Serial.println(s2, 3);
+
+      // Stop if both ~0
+      if (fabs(s1) < 1e-6 && fabs(s2) < 1e-6) {
         setMotorSpeeds(0, 0);
         resetPID();
-      } 
-      leftPID.TargetTicksPerFrame  = arg1;
-      rightPID.TargetTicksPerFrame = arg2;
+      } else if (fabs(s1) <= 1.0 && fabs(s2) <= 1.0) {
+        // Normalized mode: scale to ticks/frame
+        long t1 = lround(s1 * MAX_TICKS_PER_FRAME);
+        long t2 = lround(s2 * MAX_TICKS_PER_FRAME);
+        leftPID.TargetTicksPerFrame  = t1;
+        rightPID.TargetTicksPerFrame = t2;
+      } else {
+        // Raw mode: treat inputs as ticks/frame (round to nearest long)
+        long t1 = lround(s1);
+        long t2 = lround(s2);
+        leftPID.TargetTicksPerFrame  = t1;
+        rightPID.TargetTicksPerFrame = t2;
+      }
       Serial.println("OK");
       break;
+    }
 
     case MOTOR_RAW_PWM:
       Serial.print("CMD p args: ");

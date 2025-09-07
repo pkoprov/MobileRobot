@@ -5,6 +5,7 @@
 // PID loop rate
 #define PID_RATE 100                      // Hz
 extern const int PID_INTERVAL;           // ms (computed)
+constexpr int MAX_TICKS_PER_FRAME = 43;
 
 // PID gains (integer style, Ko = scaling)
 extern long Kp, Kd, Ki, Ko;
