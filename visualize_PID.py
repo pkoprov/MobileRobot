@@ -7,7 +7,7 @@ PORT = "COM6"        # change if needed
 BAUD = 115200
 RUN_TIME = 5.0       # seconds to log for each step
 SETTLING_BAND = 0.10 # +/-10% settling band (change to 0.05 for tighter)
-TARGETS = [25, 28, 32, 40]  # step targets to test
+TARGETS = [10, 20, 30,40]  # step targets to test
 CPP_GAINS_PATH = r"MCU\src\diff_controller.cpp"  # <- your file
 
 # ---------------------------------------------
@@ -29,9 +29,9 @@ def rl(ser):
     try: return ser.readline().decode(errors="ignore").strip()
     except: return ""
 
-# def set_pid(ser, kp, kd, ki, ko):
+def set_pid(ser, kp, kd, ki, ko):
     # Firmware expects: u <Kp> <Kd> <Ki> <Ko>
-    # send(ser, f"u {kp} {kd} {ki} {ko}\r"); time.sleep(0.12)
+    send(ser, f"u {kp} {kd} {ki} {ko}\r"); time.sleep(0.12)
 
 def run_step(ser, target, run_time=RUN_TIME):
     # reset and start
@@ -113,8 +113,8 @@ def main():
     print(f"Using gains from CPP: Kp={KP}, Kd={KD}, Ki={KI}, Ko={KO}")
 
     # # set chosen gains
-    # set_pid(ser, KP, KD, KI, KO)
-    # print(f"Locked gains: Kp={KP}, Ki={KI}, Kd={KD}, Ko={KO}\n")
+    set_pid(ser, 10, KD, KI, KO)
+    print(f"Locked gains: Kp={KP}, Ki={KI}, Kd={KD}, Ko={KO}\n")
 
     results = {}
     for tgt in TARGETS:
