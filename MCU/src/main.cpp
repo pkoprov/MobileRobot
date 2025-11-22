@@ -15,6 +15,9 @@ char argv2[16];
 long arg1 = 0;
 long arg2 = 0;
 bool raw_pwm = 0;   // 1 if in raw PWM mode
+const unsigned long MOTION_CMD_TIMEOUT_MS = 100;
+unsigned long lastMotionCmdMs = 0;
+bool motionStoppedForTimeout = false;
 
 static inline void resetCommand() {
   cmd = 0;
@@ -23,6 +26,20 @@ static inline void resetCommand() {
   arg1 = arg2 = 0;
   arg = 0;
   argIdx = 0;         // <— was `index = 0`
+}
+
+static inline void markMotionCommand() {
+  lastMotionCmdMs = millis();
+  motionStoppedForTimeout = false;
+}
+
+static inline void stopMotorsForTimeout() {
+  raw_pwm = 0;
+  leftPID.TargetTicksPerFrame  = 0;
+  rightPID.TargetTicksPerFrame = 0;
+  resetPID();
+  setMotorSpeeds(0, 0);
+  motionStoppedForTimeout = true;
 }
 
 // ---------- Run a parsed command ----------
@@ -81,6 +98,7 @@ int runCommand() {
         leftPID.TargetTicksPerFrame  = t1;
         rightPID.TargetTicksPerFrame = t2;
       }
+      markMotionCommand();
       Serial.println("OK");
       break;
     }
@@ -95,6 +113,7 @@ int runCommand() {
       resetPID();
       raw_pwm = 1;
       setMotorSpeeds((int)arg1, (int)arg2);
+      markMotionCommand();
       Serial.println("OK");
       break;
 
@@ -147,6 +166,7 @@ void setup() {
   resetEncoders();
   resetPID();
 
+  lastMotionCmdMs = millis();
   Serial.println("READY");
 }
 
@@ -183,7 +203,12 @@ void loop() {
     }
   }
 
-  if (millis() > nextPID && !raw_pwm) {
+  unsigned long now = millis();
+  if (!motionStoppedForTimeout && (now - lastMotionCmdMs) > MOTION_CMD_TIMEOUT_MS) {
+    stopMotorsForTimeout();
+  }
+
+  if (now > nextPID && !raw_pwm) {
     updatePID();
     nextPID += PID_INTERVAL;
   }
