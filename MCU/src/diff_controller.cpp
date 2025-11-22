@@ -123,13 +123,14 @@ void updatePID() {
 
   doSide(leftPID,  LEFT);
   doSide(rightPID, RIGHT);
+  
 
-  // --- Optional telemetry (LEFT only, every 3rd loop) for your Python parser
-  // Uncomment if you need it; matches "Target= ... delta= ... Sent=" pattern
-  if ((loop_ctr++ % print_div) == 0) {
-    Serial.print("E: ");
-    Serial.print(" Target="); Serial.print(rightPID.TargetTicksPerFrame);
-    Serial.print(" Err="); Serial.print(rightPID.PrevErr);
-    Serial.print(" Sent="); Serial.println(rightPID.Output);
-  }
+  // // --- Optional telemetry (LEFT only, every 3rd loop) for your Python parser
+  // // Uncomment if you need it; matches "Target= ... delta= ... Sent=" pattern
+  // if ((loop_ctr++ % print_div) == 0) {
+  //   Serial.print("E: ");
+  //   Serial.print(" Target="); Serial.print(rightPID.TargetTicksPerFrame);
+  //   Serial.print(" Err="); Serial.print(rightPID.PrevErr);
+  //   Serial.print(" Sent="); Serial.println(rightPID.Output);
+  // }
 }
