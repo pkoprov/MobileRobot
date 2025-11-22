@@ -63,11 +63,10 @@ int runCommand() {
       Serial.print(s1, 3);
       Serial.print(',');
       Serial.println(s2, 3);
-
+      resetPID();
       // Stop if both ~0
       if (fabs(s1) < 1e-6 && fabs(s2) < 1e-6) {
         setMotorSpeeds(0, 0);
-        resetPID();
       } else if (fabs(s1) <= 1.0 && fabs(s2) <= 1.0) {
         // Normalized mode: scale to ticks/frame
         long t1 = lround(s1 * MAX_TICKS_PER_FRAME);
