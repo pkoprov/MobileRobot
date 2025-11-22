@@ -13,7 +13,7 @@ constexpr int BIN2 = 8;
 constexpr int STNBY = 10;
 
 // Encoder pins (choose non-conflicting GPIOs)
-constexpr int LEFT_A_PIN  = 3;
-constexpr int LEFT_B_PIN  = 2;
-constexpr int RIGHT_A_PIN = 4;
-constexpr int RIGHT_B_PIN = 5;
+constexpr int LEFT_A_PIN  = 2;
+constexpr int LEFT_B_PIN  = 3;
+constexpr int RIGHT_A_PIN = 5;
+constexpr int RIGHT_B_PIN = 4;
