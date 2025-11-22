@@ -7,3 +7,4 @@
 MCU/*
 !MCU/src/
 !MCU/platformio.ini
+*\.vscode
