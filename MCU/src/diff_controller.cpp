@@ -2,6 +2,7 @@
 #include "diff_controller.h"
 #include "encoder_driver.h"
 #include "motor_driver.h"
+#include "ff_params.h" 
 
 // PID interval in ms
 const int PID_INTERVAL = 1000 / PID_RATE;
@@ -20,13 +21,30 @@ pid_control_t leftPID  = {0, 0, 0, 0, 0, 0};
 pid_control_t rightPID = {0, 0, 0, 0, 0, 0};
 
 // telemetry throttle
-static int print_div = 6;  // print every Nth loop
+static int print_div = 3;  // print every Nth loop
 static int loop_ctr  = 0;
 
 static inline int clampPWM(long v) {
   if (v >  MAX_PWM) return  MAX_PWM;
   if (v < -MAX_PWM) return -MAX_PWM;
   return (int)v;
+}
+
+static inline int feedforward_pwm(int side, long target_tpf) {
+  if (target_tpf == 0) return 0;
+  const FFParams& P = (side == LEFT) ? FF_LEFT : FF_RIGHT;
+  const long t_abs = labs(target_tpf);
+  float est_abs;
+  if (target_tpf > 0) {
+    est_abs = P.a_pos * (float)t_abs + P.b_pos;
+  } else {
+    est_abs = P.a_neg * (float)t_abs + P.b_neg;
+  }
+  // bound & sign
+  long est = (long)lroundf(est_abs);
+  if (est > 255) est = 255;
+  if (target_tpf < 0) est = -est;
+  return (int)est;
 }
 
 void resetPID() {
@@ -75,8 +93,12 @@ static void doSide(pid_control_t& c, int side) {
     if (c.Iterm < -ITERM_MAX) c.Iterm = -ITERM_MAX;
   }
 
+  // PID trim (converts error in ticks to PWM-like units)
   long pid = (Kp * err + Kd * c.Dterm + Ki * c.Iterm ) / Ko;
-  long out = pid;
+  // Feed-forward from target
+  int ff = feedforward_pwm(side, c.TargetTicksPerFrame);
+
+  long out = ff + pid;
 
   c.Output  = clampPWM(out);
 
@@ -101,13 +123,14 @@ void updatePID() {
 
   doSide(leftPID,  LEFT);
   doSide(rightPID, RIGHT);
+  
 
-  // --- Optional telemetry (LEFT only, every 3rd loop) for your Python parser
-  // Uncomment if you need it; matches "Target= ... delta= ... Sent=" pattern
+  // // --- Optional telemetry (LEFT only, every 3rd loop) for your Python parser
+  // // Uncomment if you need it; matches "Target= ... delta= ... Sent=" pattern
   // if ((loop_ctr++ % print_div) == 0) {
-    // Serial.print("E: ");
-    // Serial.print(" Target="); Serial.print(rightPID.TargetTicksPerFrame);
-    // Serial.print(" Err="); Serial.print(rightPID.PrevErr);
-    // Serial.print(" Sent="); Serial.println(rightPID.Output);
+  //   Serial.print("E: ");
+  //   Serial.print(" Target="); Serial.print(rightPID.TargetTicksPerFrame);
+  //   Serial.print(" Err="); Serial.print(rightPID.PrevErr);
+  //   Serial.print(" Sent="); Serial.println(rightPID.Output);
   // }
 }

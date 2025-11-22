@@ -58,16 +58,16 @@ int runCommand() {
       double s1 = strtod(argv1, nullptr);
       double s2 = strtod(argv2, nullptr);
 
-      // Echo what we parsed
-      Serial.print("CMD m args: ");
-      Serial.print(s1, 3);
-      Serial.print(',');
-      Serial.println(s2, 3);
+      // DEBUGGING: Echo what we parsed
+      // Serial.print("CMD m args: ");
+      // Serial.print(s1, 3);
+      // Serial.print(',');
+      // Serial.println(s2, 3);
 
+      resetPID();
       // Stop if both ~0
       if (fabs(s1) < 1e-6 && fabs(s2) < 1e-6) {
         setMotorSpeeds(0, 0);
-        resetPID();
       } else if (fabs(s1) <= 1.0 && fabs(s2) <= 1.0) {
         // Normalized mode: scale to ticks/frame
         long t1 = lround(s1 * MAX_TICKS_PER_FRAME);
@@ -86,10 +86,11 @@ int runCommand() {
     }
 
     case MOTOR_RAW_PWM:
-      Serial.print("CMD p args: ");
-      Serial.print(arg1);
-      Serial.print(',');
-      Serial.println(arg2);
+      // DEBUGGING: Echo what we parsed
+      // Serial.print("CMD p args: ");
+      // Serial.print(arg1);
+      // Serial.print(',');
+      // Serial.println(arg2);
 
       resetPID();
       raw_pwm = 1;

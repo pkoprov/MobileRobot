@@ -10,6 +10,8 @@ void initMotorController() {
   pinMode(PWMB, OUTPUT);
   pinMode(BIN1, OUTPUT);
   pinMode(BIN2, OUTPUT);
+  pinMode(STNBY, OUTPUT);
+  digitalWrite(STNBY, HIGH);  // take motor driver out of standby
 }
 
 void setMotorSpeed(int i, int spd) {
