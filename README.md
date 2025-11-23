@@ -23,30 +23,41 @@
 
 # 🕹️ ESP32 Robot Controller with Joystick over Serial
 
-This project connects a USB joystick (e.g., EasySMX) to an ESP32-based robot controller using serial communication. The ESP32 receives speed and direction commands and drives motors via an Adafruit FeatherWing motor shield (PCA9685 + TB6612FNG). The system is designed to run a joystick interface on a host like Jetson Xavier and control motors with smooth differential drive.
+This project connects a USB joystick (e.g., EasySMX) to an ESP32-based robot controller using serial communication. The ESP32 receives speed and direction commands and drives motors via a TB6612FNG motor driver. The system is designed to run a joystick interface on a host like Jetson Xavier and control motors with smooth differential drive.
 
 ---
 
-## 📦 Project Structure
+## Project Structure
 
 ```
-Mobile Robot/
-│
-├── Joystick/
-│   └── joystick_to_serial.py       # Python script to send joystick data to ESP32
-│
-├── MCU/                            # PlatformIO project for ESP32 firmware
-│   ├── src/
-│   │   ├── main.cpp                # Main loop
-│   │   ├── motor_driver.cpp/h      # Motor logic and serial input parsing
-│   │   ├── battery_level.cpp/h     # Battery monitoring with smoothing + alerts
-│   ├── platformio.ini              # ESP32 build config (Seeed XIAO ESP32-C3)
-│   └── ...                         # Other PlatformIO folders (.pio, lib, test, etc.)
-│
-└── assets/
-    ├── Diagram.png                 # System wiring diagram
-    ├── Diagram.pptx                # Editable PowerPoint version of diagram
-    └── README.md                   # You are here :)
+MobileRobot/
+|- README.md
+|- requirements.txt
+|- assets/                        # Diagrams and media
+|  |- Animation.gif
+|  |- Diagram.png
+|  └──  Diagram.pptx
+|- Battery Control/               # Battery display helper (host-side)
+|  └──  battery_display.py          # Shows voltage/health info
+|- Joystick/                      # Host joystick -> serial bridge
+|  └──  joystick_to_serial.py       # Sends joystick data to the ESP32
+|- MCU/                           # PlatformIO project for ESP32 firmware
+|  |- platformio.ini              # ESP32 build config (Seeed XIAO ESP32-C3)
+|  |- src/                        # Firmware sources
+|  |  |- main.cpp                 # Main loop
+|  |  |- motor_driver.cpp         # Motor logic and serial input parsing
+|  |  |- motor_driver.h
+|  |  |- diff_controller.cpp      # Differential drive helper
+|  |  |- diff_controller.h
+|  |  |- encoder_driver.cpp       # Encoder reading + tick math
+|  |  |- encoder_driver.h
+|  |  |- commands.h               # Serial command definitions
+|  |  └──  ff_params.h              # Feedforward tuning parameters
+|  |- include/README              # PlatformIO include placeholder
+|  └──  lib/README                  # PlatformIO library placeholder
+|- fit_ff_from_csv.py             # Helper: fit feedforward params from CSV
+|- sweep_pwm_vs_ticks.py          # Characterize PWM vs encoder ticks
+└──  visualize_PID.py               # Plot PID responses from logs
 ```
 
 ---
@@ -80,7 +91,7 @@ Additional plans include:
 
 - **Host system:** Jetson Xavier (Linux) or PC (Windows)
 - **Microcontroller:** Seeed XIAO ESP32-C3
-- **Motor driver:** Adafruit FeatherWing (PCA9685 + 2×TB6612FNG)
+- **Motor driver:** TB6612FNG
 - **Control interface:** USB joystick (e.g., EasySMX)
 - **Communication:** Serial over USB (`/dev/ttyACM0` or `COMx`)
 - **Frameworks:** Arduino (ESP32), Python with `pygame` and `pyserial`
@@ -104,16 +115,6 @@ This CPR value is used in the motor control code to calculate speed, rotations, 
 ### Microcontroller (ESP32) side:
 - [PlatformIO](https://platformio.org/)
 - ESP32 board support (set to `seeed_xiao_esp32c3`)
-- Libraries:
-  - Adafruit BusIO
-  - Adafruit PWM Servo Driver Library
-  - Adafruit Motor Shield V2 Library
-  - SPI
-
-```ini
-lib_deps =
-  adafruit/Adafruit Motor Shield V2 Library
-```
 
 
 ---
@@ -177,24 +178,6 @@ You can optionally use this to shut down motors, flash an LED, or send battery d
 
 ---
 
-## 🔌 Wiring
-
-See `Diagram.png` for reference.
-
-Key connections:
-- ESP32 SDA/SCL (D4/D5) → FeatherWing I²C
-- ESP32 GND ↔ FeatherWing GND
-- FeatherWing VMOT → 6–12V motor supply
-- Add 4.7k–10kΩ pull-up resistors to SDA/SCL if needed for I²C stability
-- ESP32 TX/RX (D6/D7) → Jetson GPIO RX/TX (8/10)
-- **Battery Voltage Sense**: A voltage divider (e.g., 43kΩ + 10kΩ) connected between motor supply (+12V) and an analog pin (e.g., A0/GPIO2) to monitor battery voltage
-- **GND Jumper**: Ensure the battery/motor GND and ESP32 GND are connected (a common ground is required for stable voltage measurement and signal logic)
-
-> ⚠️ Note: Without a shared GND between motor power and ESP32, voltage readings will be inaccurate and communication may fail.
-
-
-
----
 
 ## 🛠 Troubleshooting
 
