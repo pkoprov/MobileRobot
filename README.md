@@ -146,8 +146,18 @@ Build and upload `main.cpp` using PlatformIO. It will:
 
 Use `joystick_to_serial.py` to:
 - Auto-detect ESP32 serial port
-- Read left joystick axis input
-- Send commands like `"0.8 -0.5\n"` over serial
+- Read left joystick axis input (forward = up on the stick, left = left on the stick)
+- Mix axes into differential drive (`left = y + x`, `right = y - x`, both clamped to [-1..1])
+- Send MCU commands with a selectable command character:
+  - `-c m` (default) sends normalized speeds: `m <left> <right>\r` (floats)
+  - `-c p` sends raw PWM: `p <leftPWM> <rightPWM>\r` (ints scaled to -255..255)
+
+Examples:
+```bash
+python Joystick/joystick_to_serial.py -c m        # closed-loop motor speeds
+python Joystick/joystick_to_serial.py -c p        # raw PWM
+python Joystick/joystick_to_serial.py --port COM3 # override port
+```
 
 
 > Note: On Jetson or Linux, you may need to install `joystick` and set:
