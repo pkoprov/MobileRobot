@@ -21,12 +21,7 @@ def find_esp32_port(preferred_port=None):
         return preferred_port
 
     system = platform.system()
-    ports = serial.tools.list_ports.comports()
-
-    print("Available ports:")
-    if system == "Linux" and os.path.exists("/dev/ttyTHS0"):
-        print("/dev/ttyTHS0 (Jetson default)")
-        return "/dev/ttyTHS0"
+    ports = serial.tools.list_ports.comports()"
 
     for p in ports:
         print(f"{p.device} - {p.description} - VID:{p.vid} PID:{p.pid}")
