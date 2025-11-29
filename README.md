@@ -192,14 +192,27 @@ You can optionally use this to shut down motors, flash an LED, or send battery d
 ## 🛠 Troubleshooting
 
 - If joystick isn't detected: make sure it's initialized (`pygame.joystick.init()`)
+- If testing in WSL, first thing you need to bind your PC's port to WSL. Open PowerShell with admin rights and run the following lines:
+  ```powershell
+  usbipd list # find the BUSID of esp32. In my case it was "USB Serial Device (COM6), USB JTAG/serial debug unit" 
+  ```
+  Then you need to attach it
+  ```powershell
+  usbipd attach --wsl --busid <BUSID>
+  ```
+  Optional: persistent attach when reconnecting the USB device:
+  ```powershell
+  usbipd bind --busid <BUSID>
+  ```
+  Verify inside WSL:
+  ```bash
+  lsusb
+  dmesg | tail
+  ```
 - If serial port permission denied on Linux:
   ```bash
   sudo usermod -a -G dialout $USER
   ```
-- If FeatherWing isn't found at startup:
-  - Add a delay before `AFMS.begin()`
-  - Ensure clean I²C wiring and pull-ups
-
 ---
 
 ## 📸 Demo
