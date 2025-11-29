@@ -28,9 +28,6 @@ def find_esp32_port(preferred_port: Optional[str] = None) -> Optional[str]:
     system = platform.system()
     ports = serial.tools.list_ports.comports()
 
-    if system == "Linux" and os.path.exists("/dev/ttyTHS0"):
-        return "/dev/ttyTHS0"
-
     for port in ports:
         if system == "Windows":
             if "usb serial" in port.description.lower() or "esp32" in port.description.lower():
