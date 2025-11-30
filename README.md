@@ -105,7 +105,7 @@ This project uses [JGA25-370 12V 130RPM gear motors with encoders](https://www.a
 - 🔧 Motor type: DC gearmotor with metal gearbox
 - 🧭 Encoder: dual-channel hall-effect (quadrature)
 - 🌀 No-load speed: ~130 RPM @ 12V
-- 📏 Measured encoder counts per output shaft revolution (CPR): **1974**
+- 📏 Measured encoder counts per output shaft revolution (CPR): **1975**
 
 This CPR value is used in the motor control code to calculate speed, rotations, and distance accurately.
 
