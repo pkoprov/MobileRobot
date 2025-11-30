@@ -40,18 +40,6 @@ def find_esp32_port(preferred_port: Optional[str] = None) -> Optional[str]:
     return None
 
 
-def format_packet(command_char: str, left: float, right: float) -> str:
-    if command_char == "p":
-        scale = 255
-        scaled_left = int(clamp(left, -1.0, 1.0) * scale)
-        scaled_right = int(clamp(right, -1.0, 1.0) * scale)
-        return f"{command_char} {scaled_left} {scaled_right}\r"
-
-    normalized_left = clamp(left, -1.0, 1.0)
-    normalized_right = clamp(right, -1.0, 1.0)
-    return f"{command_char} {normalized_left:.3f} {normalized_right:.3f}\r"
-
-
 class CmdVelSerialBridge(Node):
     def __init__(self) -> None:
         super().__init__("cmd_vel_serial_bridge")
@@ -67,15 +55,14 @@ class CmdVelSerialBridge(Node):
         self.declare_parameter("Ko", 10)
 
         command_char = self.get_parameter("command_char").get_parameter_value().string_value
-        command_char = command_char or DEFAULT_COMMAND
         if command_char not in ("m", "p"):
             raise ValueError("command_char must be 'm' or 'p'")
         self.command_char = command_char
 
         port_param = self.get_parameter("port").get_parameter_value().string_value
         baud = self.get_parameter("baud").get_parameter_value().integer_value
-        self.max_linear = float(self.get_parameter("max_linear").get_parameter_value().double_value)
-        self.max_angular = float(self.get_parameter("max_angular").get_parameter_value().double_value)
+        self.max_linear = self.get_parameter("max_linear").get_parameter_value().double_value
+        self.max_angular = self.get_parameter("max_angular").get_parameter_value().double_value
 
         port = find_esp32_port(port_param)
         if not port:
@@ -128,7 +115,7 @@ class CmdVelSerialBridge(Node):
         left = clamp(linear_norm + angular_norm, -1.0, 1.0)
         right = clamp(linear_norm - angular_norm, -1.0, 1.0)
 
-        packet = format_packet(self.command_char, left, right)
+        packet = format_packet(self, left, right)
         try:
             self.ser.write(packet.encode("ascii"))
             self.get_logger().debug(f"Sent: {packet.strip()}")
@@ -148,7 +135,15 @@ class CmdVelSerialBridge(Node):
         except Exception:
             pass
         return super().destroy_node()
+        
+def format_packet(node: CmdVelSerialBridge, left: float, right: float) -> str:
+    if node.command_char == "p":
+        scale = 255
+        left = int(left * scale)
+        right = int(right * scale)
 
+    node.get_logger().info(f"sending {node.command_char} command: left={left} right={right}")
+    return f"{node.command_char} {left:.3f} {right:.3f}\r"
 
 def main(args=None) -> None:
     rclpy.init(args=args)
