@@ -9,6 +9,7 @@ from geometry_msgs.msg import Twist
 from rclpy.node import Node
 import serial
 import serial.tools.list_ports
+from rcl_interfaces.msg import SetParametersResult
 
 
 DEFAULT_BAUD = 115200
@@ -60,6 +61,10 @@ class CmdVelSerialBridge(Node):
         self.declare_parameter("command_char", DEFAULT_COMMAND)
         self.declare_parameter("max_linear", DEFAULT_MAX_LINEAR)
         self.declare_parameter("max_angular", DEFAULT_MAX_ANGULAR)
+        self.declare_parameter("Kp", 60)
+        self.declare_parameter("Kd", 0)
+        self.declare_parameter("Ki", 4)
+        self.declare_parameter("Ko", 10)
 
         command_char = self.get_parameter("command_char").get_parameter_value().string_value
         command_char = command_char or DEFAULT_COMMAND
@@ -89,7 +94,28 @@ class CmdVelSerialBridge(Node):
         )
 
         self.subscription = self.create_subscription(Twist, "cmd_vel", self.twist_callback, 10)
+        self.add_on_set_parameters_callback(self.PID_callback)
 
+    def PID_callback(self, params):
+        updates = {p.name: p.value for p in params}
+
+        Kp = updates.get("Kp", self.get_parameter("Kp").value)
+        Kd = updates.get("Kd", self.get_parameter("Kd").value)
+        Ki = updates.get("Ki", self.get_parameter("Ki").value)
+        Ko = updates.get("Ko", self.get_parameter("Ko").value)
+
+        pid_packet = f"u {Kp} {Kd} {Ki} {Ko}\r"
+        try:
+            self.ser.write(pid_packet.encode("ascii"))
+            self.get_logger().info(f"Sent PID parameters: Kp={Kp}, Kd={Kd}, Ki={Ki}, Ko={Ko}")
+            return SetParametersResult(successful=True)
+        except serial.SerialException as exc:
+            self.get_logger().error(f"Serial write failed: {exc}")
+            return SetParametersResult(
+                    successful=False,
+                    reason=f"Serial write failed: {exc}",
+                )
+    
     def twist_callback(self, msg: Twist) -> None:
         linear_norm = 0.0
         angular_norm = 0.0
