@@ -13,8 +13,8 @@ import serial.tools.list_ports
 
 DEFAULT_BAUD = 115200
 DEFAULT_COMMAND = "m"
-DEFAULT_MAX_LINEAR = 1.0   # m/s used to normalize linear.x to [-1, 1]
-DEFAULT_MAX_ANGULAR = 1.0  # rad/s used to normalize angular.z to [-1, 1]
+DEFAULT_MAX_LINEAR = 0.453   # m/s used to normalize linear.x to [-1, 1]
+DEFAULT_MAX_ANGULAR = 4.19  # rad/s used to normalize angular.z to [-1, 1]
 
 
 def clamp(value: float, lower: float, upper: float) -> float:
