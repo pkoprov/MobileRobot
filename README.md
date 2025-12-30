@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">ESP32 Robot Controller with Joystick 🎮</h1>
-<p align="center">Host Joystick ➔ Serial ➔ ESP32 ➔ FeatherWing ➔ Motors</p>
+<p align="center">Host Joystick ➔ Serial ➔ ESP32 ➔ TB6612FNG ➔ Motors</p>
 
 <p align="center">
   <a href="https://platformio.org/">
@@ -66,10 +66,9 @@ MobileRobot/
 
 This project is designed with future ROS 2 integration in mind, allowing the ESP32 to act as a low-level motor controller while high-level planning and sensing are handled on the Jetson Xavier using ROS 2 nodes.
 
-### ✅ Current Architecture
-- Joystick axis data is sent directly to the ESP32 via serial over USB.
+### ✅ Current Architecture [`Joystick/joystick_to_serial.py`]
+- Joystick axis data is sent directly to the ESP32 via serial over USB. 
 - The ESP32 applies differential drive logic and controls the motors.
-- It also performs battery voltage monitoring using ADC, smoothing with a moving average, and alerts via serial when battery is low.
 - Communication uses a simple `"X Y\n"` ... from -1.0 to 1.0 (normalized float).
 
 ### 🚀 Future ROS 2 Upgrade Path
@@ -90,9 +89,10 @@ Additional plans include:
 ## 🚦 System Overview
 
 - **Host system:** Jetson Xavier (Linux) or PC (Windows)
-- **Microcontroller:** Seeed XIAO ESP32-C3
-- **Motor driver:** TB6612FNG
-- **Control interface:** USB joystick (e.g., EasySMX)
+- **Microcontroller:** [Seeed XIAO ESP32-C3](https://a.co/d/fxnU5IB)
+- **Motor driver:** [TB6612FNG](https://a.co/d/c7OfLXC)
+- **Control interface:** [USB joystick (e.g., EasySMX)](https://a.co/d/foCvRpO)
+- **LiDAR:** [RPLIDAR C1](https://a.co/d/6Qoewwf)
 - **Communication:** Serial over USB (`/dev/ttyACM0` or `COMx`)
 - **Frameworks:** Arduino (ESP32), Python with `pygame` and `pyserial`
 
@@ -136,9 +136,6 @@ pip install pygame pyserial
 ### 1. Run on ESP32
 
 Build and upload `main.cpp` using PlatformIO. It will:
-- Initialize the FeatherWing motor driver
-- Monitor battery voltage with ADC and filter readings using a moving average
-- Print low-voltage warnings (< 11.0 V) to the serial console
 - Wait for serial input of joystick axis data (formatted as `"X Y\n"`, with normalized values from `-1.0` to `1.0`)
 - Apply differential drive logic to control two DC motors
 
@@ -198,13 +195,6 @@ right_speed = y - x
 - `x` controls turning
 - `y` controls forward/backward
 - Values are constrained to `[-1.0, 1.0]` and mapped to PWM duty (0–255).
-
----
-
-## 🪫 Battery Monitoring
-The ESP32 reads the main battery voltage via an analog pin. A moving average filter ensures smooth readings. If voltage drops below `11.0 V`, a warning is printed to the serial console.
-
-You can optionally use this to shut down motors, flash an LED, or send battery data back to the host via serial.
 
 ---
 
