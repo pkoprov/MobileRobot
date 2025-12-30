@@ -105,7 +105,7 @@ This project uses [JGA25-370 12V 130RPM gear motors with encoders](https://www.a
 - 🔧 Motor type: DC gearmotor with metal gearbox
 - 🧭 Encoder: dual-channel hall-effect (quadrature)
 - 🌀 No-load speed: ~130 RPM @ 12V
-- 📏 Measured encoder counts per output shaft revolution (CPR): **1974**
+- 📏 Measured encoder counts per output shaft revolution (CPR): **1975**
 
 This CPR value is used in the motor control code to calculate speed, rotations, and distance accurately.
 
@@ -158,6 +158,26 @@ python Joystick/joystick_to_serial.py -c m        # closed-loop motor speeds
 python Joystick/joystick_to_serial.py -c p        # raw PWM
 python Joystick/joystick_to_serial.py --port COM3 # override port
 ```
+
+### 3. ROS 2 `cmd_vel` bridge
+
+Bridge any ROS 2 velocity publisher (e.g., `teleop_twist_keyboard`, `teleop_twist_joy`) to the MCU:
+
+```bash
+source /opt/ros/humble/setup.bash  # or your ROS 2 distro
+python ros2/cmd_vel_serial_bridge.py --ros-args \
+  -p port:=/dev/ttyACM0 \
+  -p command_char:=m \
+  -p max_linear:=1.0 \
+  -p max_angular:=1.0
+```
+
+Behavior:
+- Subscribes to `cmd_vel` (`geometry_msgs/Twist`)
+- Normalizes `linear.x` by `max_linear` and `angular.z` by `max_angular`
+- Mixes differential drive: `left = y + x`, `right = y - x`, each clamped to [-1..1]
+- Sends MCU commands as `m <left> <right>\r` (floats) or `p <leftPWM> <rightPWM>\r` (ints scaled to -255..255)
+
 
 
 > Note: On Jetson or Linux, you may need to install `joystick` and set:

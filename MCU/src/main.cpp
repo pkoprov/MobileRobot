@@ -135,6 +135,15 @@ int runCommand() {
         tok = strtok_r(nullptr, " \t", &saveptr);
       }
 
+      if (i ==1 && pid_args[0]==-1) {
+        // Special case: print current PID values
+        Serial.print(Kp); Serial.print(' ');
+        Serial.print(Kd); Serial.print(' ');
+        Serial.print(Ki); Serial.print(' ');
+        Serial.println(Ko);
+        break;
+      }
+
       if (i == 4) {
         Kp = pid_args[0];
         Kd = pid_args[1];
