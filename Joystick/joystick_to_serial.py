@@ -21,7 +21,7 @@ def find_esp32_port(preferred_port=None):
         return preferred_port
 
     system = platform.system()
-    ports = serial.tools.list_ports.comports()"
+    ports = serial.tools.list_ports.comports()
 
     for p in ports:
         print(f"{p.device} - {p.description} - VID:{p.vid} PID:{p.pid}")
