@@ -64,25 +64,26 @@ MobileRobot/
 
 ## 🤖 ROS 2 Integration Plans
 
-This project is designed with future ROS 2 integration in mind, allowing the ESP32 to act as a low-level motor controller while high-level planning and sensing are handled on the Jetson Xavier using ROS 2 nodes.
+ROS 2 control is already implemented. See `ros2/cmd_vel_serial_bridge.py`, and the separate repo at https://github.com/pkoprov/pkis_scout for additional ROS 2 integration.
 
 ### ✅ Current Architecture [`Joystick/joystick_to_serial.py`]
 - Joystick axis data is sent directly to the ESP32 via serial over USB. 
 - The ESP32 applies differential drive logic and controls the motors.
 - Communication uses a simple `"X Y\n"` ... from -1.0 to 1.0 (normalized float).
 
-### 🚀 Future ROS 2 Upgrade Path
+### 🚀 Current ROS 2 Integration
 
-| Component            | Role                                |
-|----------------------|-------------------------------------|
-| `joy_node`           | Reads USB joystick via SDL or evdev |
-| `teleop_twist_joy`   | Converts joystick axes to `cmd_vel` |
-| `serial_bridge_node` | Sends `cmd_vel` as `"X Y"` strings over serial |
-| `esp32_motor_driver` | Runs on ESP32 to parse and execute commands |
+| Component               | Role                                                    |
+|-------------------------|-------------------------------------                    |
+| `joy_node`              | Reads USB joystick via SDL or evdev (install seprately) |
+| `teleop_twist_joy`      | Converts joystick axes to `cmd_vel` (install seprately) |
+| `cmd_vel_serial_bridge` | Sends `cmd_vel` as `"X Y"` strings over serial          |
+| `esp32_motor_driver`    | Runs on ESP32 to parse and execute commands             |
 
-Additional plans include:
-- Publishing encoder feedback from ESP32 for `odom`
-- Creating an Isaac Sim digital twin for development and validation
+Next upgrade plans include:
+- Publish joint states to `joint_state_publisher`
+- Create a URDF for the robot
+- Create a launch file to bring up the robot
 
 ---
 
